@@ -36,12 +36,18 @@ def _(mo):
 
     $$\int_{-1}^{1} f(x) \, dx \approx w_1 f(x_1) + w_2 f(x_2) + w_3 f(x_3) + w_4 f(x_4)$$
 
-    ### **1. Require Exactness for Basis Monomials**:
+    ### **1. Integrating constant, linear, square, cubic**:
     * $f(x) = 1   \implies \int_{-1}^{1} 1 \, dx = 2$
     * $f(x) = x   \implies \int_{-1}^{1} x \, dx = 0$
     * $f(x) = x^2  \implies \int_{-1}^{1} x^2 \, dx = \frac{2}{3}$
     * $f(x) = x^3  \implies \int_{-1}^{1} x^3 \, dx = 0$
+    """)
+    return
 
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ### **2. Linear System for Weights**:
     $$ \begin{bmatrix}
     1 & 1 & 1 & 1 \\
@@ -113,7 +119,7 @@ def _(mo):
     ## Legendre Polynomials $P_N(x)$
 
     **Definition**: An $N$-th degree polynomial.
-    *(Expressed over the standard monomial basis $\{1, x, x^2, x^3, x^4\}$)*
+    *($\{1, x, x^2, x^3, x^4\}$)*
 
     $$P_0(x) = 1$$
     $$P_1(x) = x$$
@@ -185,17 +191,35 @@ def _(mo):
     Dividing $f(x)$ (degree $\le 2N-1$) by the $N$-th Legendre polynomial $P_N(x)$ gives:
     $$f(x) = q(x) P_N(x) + r(x)$$
     *(where $q(x)$ and $r(x)$ are both polynomials of degree $\le N-1$)*
+    """)
+    return
 
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ### **2. Integrate Over $[-1, 1]$**:
     $$\int_{-1}^{1} f(x) \, dx = \int_{-1}^{1} q(x) P_N(x) \, dx + \int_{-1}^{1} r(x) \, dx$$
     * By **orthogonality**, $\int_{-1}^{1} q(x) P_N(x) \, dx = 0$.
     * Therefore, $\int_{-1}^{1} f(x) \, dx = \int_{-1}^{1} r(x) \, dx$.
+    """)
+    return
 
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ### **3. Choose $x_k$ as the Roots of $P_N(x)$**:
     * Setting $P_N(x_k) = 0$ eliminates $q(x_k) P_N(x_k)$ in the sum:
       $$\sum_{k=1}^N w_k f(x_k) = \sum_{k=1}^N w_k r(x_k)$$
     * Because $r(x)$ has degree $\le N-1$, $\sum_{k=1}^N w_k r(x_k) = \int_{-1}^{1} r(x) \, dx$ **exactly**.
+    """)
+    return
 
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ### **Conclusion**:
     $$\int_{-1}^{1} f(x) \, dx = \sum_{k=1}^N w_k f(x_k) \quad \text{(Exact for degree } \le 2N-1 \text{)}$$
     * **No wild weight oscillations**: Sample points cluster near interval boundaries, producing smooth, well-behaved weights.
@@ -322,8 +346,61 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # to-do: error
+    ## Example 5.2: Gaussian integral of a simple function
+
+    Consider the integral
+
+    $$
+    \int_0^2 (x^4 - 2x + 1)\,dx.
+    $$
+
+    Its exact value is $4.4$. We will evaluate it with Gaussian quadrature using
+    only $N=3$ sample points.
+
+    Gaussian integration with $N$ points is exact for polynomials up to degree
+    $2N-1$. For $N=3$, this means every polynomial up to degree five is integrated
+    exactly. Since $x^4-2x+1$ has degree four, the numerical answer should be
+    exact up to floating-point round-off.
+
+    The textbook implementation uses `gaussxw(N, a, b)` from `gaussxw.py`. The
+    cell below performs the same interval transformation directly with SciPy's
+    Legendre nodes and weights.
     """)
+    return
+
+
+@app.cell
+def _():
+    import marimo as _mo
+    import numpy as _np
+    from scipy.special import roots_legendre as _roots_legendre_example
+
+    def _gaussxw(_n, _a=-1.0, _b=1.0):
+      """Return Gaussian nodes and weights mapped to [_a, _b]."""
+      _nodes, _weights = _roots_legendre_example(_n)
+      _mapped_nodes = 0.5 * (_b - _a) * _nodes + 0.5 * (_a + _b)
+      _mapped_weights = 0.5 * (_b - _a) * _weights
+      return _mapped_nodes, _mapped_weights
+
+    def _f_example(_x):
+      return _x**4 - 2.0 * _x + 1.0
+
+    _N_example = 3
+    _a_example = 0.0
+    _b_example = 2.0
+    _x_example, _w_example = _gaussxw(_N_example, _a_example, _b_example)
+    _gaussian_result = sum(_w_example[_k] * _f_example(_x_example[_k]) for _k in range(_N_example))
+    _exact_result = 4.4
+    _absolute_error = abs(_gaussian_result - _exact_result)
+
+    _mo.md(
+      f"**Answer:** With $N={_N_example}$, the Gaussian sample points are "
+      f"`${_np.round(_x_example, 6).tolist()}`$ and the weights are "
+      f"`${_np.round(_w_example, 6).tolist()}`$.\\n\\n"
+      f"The weighted sum gives **{_gaussian_result:.16f}**, compared with the exact "
+      f"value **{_exact_result:.1f}**. The absolute error is "
+      f"${_absolute_error:.2e}$, which is floating-point round-off."
+    )
     return
 
 
