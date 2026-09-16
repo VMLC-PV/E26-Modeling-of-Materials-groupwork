@@ -576,5 +576,14 @@ def _(runge_points_slider):
     return
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # Useful link
+    [MathTheBeautiful videos on Gaussian quadrature](https://www.youtube.com/watch?v=65zwMgGZnUs&list=PLlXfTHzgMRULZfrNCrrJ7xDcTjGr633mm&index=18)
+    """)
+    return
+
+
 if __name__ == "__main__":
     app.run()
