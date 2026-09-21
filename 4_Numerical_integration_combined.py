@@ -21,7 +21,7 @@ def _():
     from scipy.interpolate import interp1d
     from scipy.integrate import quad
 
-    return go, interp1d, mo, np, pd, plt, quad
+    return go, interp1d, mo, np, plt, quad
 
 
 @app.cell(hide_code=True)
@@ -52,10 +52,6 @@ def _(mo):
     4. **Adaptive** integration, controlling the error by step doubling
     5. **Romberg** integration, a systematic extrapolation to higher order
     6. **Difficult integrands**: discontinuities and improper integrals
-    7. A physics capstone: the density of a relativistic quantum gas
-
-    Throughout, we track a single reference example so that the methods can be
-    compared directly against each other and against the known exact answer.
     """)
     return
 
@@ -64,7 +60,7 @@ def _(mo):
 def _(mo):
     md_ref_title = mo.md(
         """
-        ## 1. A reference example
+        ## A reference example
         ---
         """
     )
@@ -168,78 +164,6 @@ def _(a_val, b_val, c_val, mo):
 
 
 @app.cell
-def _(
-    I_exact,
-    a_ref,
-    a_val,
-    b_ref,
-    b_val,
-    c_val,
-    f,
-    formula_widget,
-    md_ref_text,
-    md_ref_title,
-    mo,
-    np,
-    plt,
-):
-    _xplot = np.linspace(a_ref, b_ref, 400)
-    _yplot = f(_xplot)
-
-    _fig, _ax = plt.subplots()
-    _ax.plot(_xplot, _yplot, color="crimson", lw=2, label=r"$f(x) = ax^4 + bx + c$")
-    _ax.fill_between(_xplot, _yplot, alpha=0.2, color="crimson")
-    _ax.axhline(0.0, color="black", lw=0.8, ls="--")
-    _ax.set(xlabel="$x$", ylabel="$f(x)$")
-    _ax.legend()
-
-    mo.vstack(
-        [
-            md_ref_title,
-            md_ref_text,
-            mo.hstack([formula_widget,mo.md(rf"""
-                $$
-                \huge
-                = \left[\frac{{{a_val:g}}}{{5}}x^5 + \frac{{{b_val:g}}}{{2}}x^2 + {c_val:g}x\right]_0^2 = {I_exact:g}
-                $$
-                """)],align="center",justify="center"),
-            _fig,
-        ]
-    )
-    return
-
-
-@app.cell
-def _(mo):
-    md_rect_title = mo.md(
-        """
-        ## 2. Rectangle (midpoint) rule
-        ---
-        """
-    )
-    md_rect_text = mo.md(
-        r"""
-        Approximate the integral over a slice by the area of a rectangle whose
-        height is the value of $f$ at the slice's midpoint:
-        $$
-        \int_a^b f(x)\,dx \approx (b-a)\, f\!\left(\frac{a+b}{2}\right).
-        $$
-        Splitting $[a,b]$ into $N$ slices of width $h=(b-a)/N$ and applying
-        this to each one gives the **composite rectangle rule**
-        $$
-        \int_a^b f(x)\,dx \approx h \sum_{k=1}^{N} f(x_k), \qquad
-        x_k = a + \left(k - \tfrac12\right) h.
-        $$
-        A Taylor expansion around the midpoint shows that a single slice has
-        error $\frac{h^3}{24}f''(\xi)$, so the composite rule converges as
-        $\mathcal{O}(h^2)$. The rule is exact for any linear function, since
-        $f''=0$ then.
-        """
-    )
-    return md_rect_text, md_rect_title
-
-
-@app.cell
 def _(np):
     def rectangle_rule(f, a, b, n):
         h = (b - a) / n
@@ -256,19 +180,7 @@ def _(mo):
 
 
 @app.cell
-def _(
-    I_exact,
-    a_ref,
-    b_ref,
-    f,
-    md_rect_text,
-    md_rect_title,
-    mo,
-    np,
-    plt,
-    rect_n,
-    rectangle_rule,
-):
+def _(I_exact, a_ref, b_ref, f, mo, np, plt, rect_n, rectangle_rule):
     _n = rect_n.value
     _h = (b_ref - a_ref) / _n
     _edges = a_ref + _h * np.arange(_n + 1)
@@ -276,7 +188,7 @@ def _(
     _heights = f(_midpoints)
 
     _xplot = np.linspace(a_ref, b_ref, 400)
-    _fig, _ax = plt.subplots()
+    fig_rectangle, _ax = plt.subplots()
     _ax.plot(_xplot, f(_xplot), color="crimson", lw=2, label="$f(x)$")
     _ax.bar(
         _edges[:-1],
@@ -293,66 +205,39 @@ def _(
     _ax.set(xlabel="$x$", ylabel="$f(x)$")
     _ax.legend()
 
-    _estimate = rectangle_rule(f, a_ref, b_ref, _n)
+    estimate_rectangle = rectangle_rule(f, a_ref, b_ref, _n)
     mo.vstack(
         [
-            md_rect_title,
-            md_rect_text,
-            mo.hstack([rect_n,mo.stat(label="Estimate", value=f"{_estimate:.6f}"),
+            mo.hstack([rect_n,mo.stat(label="Estimate", value=f"{estimate_rectangle:.6f}"),
                     mo.stat(
                         label="Absolute error",
-                        value=f"{abs(I_exact - _estimate):.3e}",
+                        value=f"{abs(I_exact - estimate_rectangle):.3e}",
                     )]),
-            _fig,
+            fig_rectangle,
         ],
         justify="center"
     )
     mo.vstack(
         [
-            md_rect_title,
             mo.hstack(
                 [
-                    mo.vstack([md_rect_text,mo.hstack([mo.stat(label="Estimate", value=f"{_estimate:.6f}"),
-                    mo.stat(label="Absolute error",value=f"{abs(I_exact - _estimate):.3e}")])]),
-                    mo.vstack([rect_n,_fig],align="center"),
+                    mo.vstack([mo.hstack([mo.stat(label="Estimate", value=f"{estimate_rectangle:.6f}"),
+                    mo.stat(label="Absolute error",value=f"{abs(I_exact - estimate_rectangle):.3e}")])]),
+                    mo.vstack([rect_n,fig_rectangle],align="center"),
 
                 ],
                 widths=[0.5, 0.5],
                 align="start"
             )
         ], 
-
     )
-    return
 
-
-@app.cell
-def _(mo):
-    md_trap_title = mo.md(
-        """
-        ## 3. Trapezoidal rule
-        ---
+    md_rectangle_text = mo.md(
+        rf"""
+        ### Rectangle (midpoint) rule:
         """
     )
-    md_trap_text = mo.md(
-        r"""
-        Instead of a rectangle, approximate $f$ on each slice by the straight
-        line through its two endpoints. The area under that line is a trapezoid:
-        $$
-        \int_a^b f(x)\,dx \approx (b-a)\,\frac{f(a)+f(b)}{2}.
-        $$
-        The composite rule over $N$ slices of width $h=(b-a)/N$ reads
-        $$
-        \int_a^b f(x)\,dx \approx h \left[\frac{f(x_0)+f(x_N)}{2} +
-        \sum_{k=1}^{N-1} f(x_k)\right], \qquad x_k = a + kh.
-        $$
-        Its leading error term is $-\frac{h^3}{12}f''(\xi)$ per slice — same
-        order as the rectangle rule, $\mathcal{O}(h^2)$ overall, but with the
-        opposite sign and twice the magnitude. It is likewise exact for
-        linear functions.
-        """
-    )
-    return md_trap_text, md_trap_title
+    return estimate_rectangle, fig_rectangle, md_rectangle_text
 
 
 @app.cell
@@ -362,24 +247,13 @@ def _(mo):
 
 
 @app.cell
-def _(
-    I_exact,
-    a_ref,
-    b_ref,
-    f,
-    md_trap_text,
-    md_trap_title,
-    mo,
-    np,
-    plt,
-    trap_n,
-):
+def _(a_ref, b_ref, f, mo, np, plt, trap_n):
     _n = trap_n.value
     _x = np.linspace(a_ref, b_ref, _n + 1)
     _y = f(_x)
 
     _xplot = np.linspace(a_ref, b_ref, 400)
-    _fig, _ax = plt.subplots()
+    fig_trapezoidal, _ax = plt.subplots()
     _ax.plot(_xplot, f(_xplot), color="crimson", lw=3, label="$f(x)$")
     _ax.fill_between(
         _x, _y, color="darkorange", alpha=0.4, label="Trapezoids", step=None
@@ -401,59 +275,14 @@ def _(
         h = (b - a) / n
         return h * (0.5 * y[0] + 0.5 * y[-1] + np.sum(y[1:-1]))
 
-    _estimate = trapezoidal_rule(f, a_ref, b_ref, _n)
-    mo.vstack(
-        [
-            md_trap_title,
-            mo.hstack(
-                [
-                    mo.vstack([md_trap_text,mo.hstack([mo.stat(label="Estimate", value=f"{_estimate:.6f}"),
-                    mo.stat(label="Absolute error",value=f"{abs(I_exact - _estimate):.3e}")])]),
-                    mo.vstack([trap_n,_fig],align="center"),
+    estimate_trapezoidal = trapezoidal_rule(f, a_ref, b_ref, _n)
 
-                ],
-                widths=[0.5, 0.5],
-                align="start"
-            )
-        ]
-    )
-    return (trapezoidal_rule,)
-
-
-@app.cell
-def _(mo):
-    md_simpson_title = mo.md(
-        """
-        ## 4. Simpson's rule
-        ---
+    md_trapezoidal_text = mo.md(
+        rf"""
+        ### Trapezoidal rule:
         """
     )
-    md_simpson_text = mo.md(
-        r"""
-        The rectangle and trapezoidal errors have the same order but opposite
-        sign and different weight:
-        $$
-        I - I_{\rm rect} = \frac{h^3}{24}f''(\xi) + \mathcal{O}(h^4), \qquad
-        I - I_{\rm trap} = -\frac{h^3}{12}f''(\xi) + \mathcal{O}(h^4).
-        $$
-        Combining them in the ratio that cancels the $h^2$ term,
-        $$
-        I_S = \frac{2 I_{\rm rect} + I_{\rm trap}}{3},
-        $$
-        removes the leading error and leaves an $\mathcal{O}(h^4)$ method:
-        **Simpson's rule**. Equivalently, it fits a parabola through the two
-        endpoints and the midpoint of each slice. Over $N$ (even) slices with
-        $h=(b-a)/N$:
-        $$
-        \int_a^b f(x)\,dx \approx \frac{h}{3}\left[f(x_0) + f(x_N) +
-        4\sum_{k~{\rm odd}} f(x_k) + 2\sum_{k~{\rm even}, \,k\neq 0,N} f(x_k)\right].
-        $$
-        Because the local parabola matches $f$, $f'$ and $f''$ at the
-        midpoint, Simpson's rule integrates any cubic **exactly** — one order
-        higher than either of its ingredients.
-        """
-    )
-    return md_simpson_text, md_simpson_title
+    return estimate_trapezoidal, fig_trapezoidal, md_trapezoidal_text
 
 
 @app.cell
@@ -463,25 +292,14 @@ def _(mo):
 
 
 @app.cell
-def _(
-    I_exact,
-    a_ref,
-    b_ref,
-    f,
-    md_simpson_text,
-    md_simpson_title,
-    mo,
-    np,
-    plt,
-    simpson_n,
-):
+def _(a_ref, b_ref, f, mo, np, plt, simpson_n):
     _n = simpson_n.value
     _h = (b_ref - a_ref) / _n
     _x = a_ref + _h * np.arange(_n + 1)
     _y = f(_x)
 
     _xplot = np.linspace(a_ref, b_ref, 400)
-    _fig, _ax = plt.subplots()
+    fig_simpson, _ax = plt.subplots()
     _ax.plot(_xplot, f(_xplot), color="crimson", lw=2, label="$f(x)$")
 
     for _k in range(0, _n, 2):
@@ -511,318 +329,133 @@ def _(
             y[0] + y[-1] + 4.0 * np.sum(y[1:-1:2]) + 2.0 * np.sum(y[2:-1:2])
         )
 
-    _estimate = simpson_rule(f, a_ref, b_ref, _n)
-    mo.vstack(
-        [
-            md_simpson_title,
-            md_simpson_text,
-            simpson_n,
-            _fig,
-            mo.hstack(
-                [
-                    mo.stat(label="Estimate", value=f"{_estimate:.6f}"),
-                    mo.stat(
-                        label="Absolute error",
-                        value=f"{abs(I_exact - _estimate):.3e}",
-                    ),
-                ]
-            ),
-        ]
-    )
-    return (simpson_rule,)
+    estimate_simpson = simpson_rule(f, a_ref, b_ref, _n)
 
-
-@app.cell
-def _(mo):
-    md_exact_title = mo.md(
-        """
-        ### Exactness demo
-        ---
+    md_simpson_text = mo.md(
+        rf"""
+        ### Simpon's rule:
         """
     )
-    md_exact_text = mo.md(
-        r"""
-        Pick the degree of a random polynomial and compare how each rule
-        performs on $[-1,2]$ using only $N=6$ slices. Simpson's rule should
-        show (near) zero error up to degree 3, while the rectangle and
-        trapezoidal rules only do so up to degree 1.
-        """
-    )
-    return md_exact_text, md_exact_title
-
-
-@app.cell
-def _(mo):
-    exactness_degree = mo.ui.dropdown(
-        options={
-            "Constant (degree 0)": 0,
-            "Linear (degree 1)": 1,
-            "Quadratic (degree 2)": 2,
-            "Cubic (degree 3)": 3,
-            "Quartic (degree 4)": 4,
-        },
-        value="Cubic (degree 3)",
-        label="Polynomial degree:",
-    )
-    return (exactness_degree,)
-
-
-@app.cell
-def _(
-    exactness_degree,
-    md_exact_text,
-    md_exact_title,
-    mo,
-    np,
-    plt,
-    rectangle_rule,
-    simpson_rule,
-    trapezoidal_rule,
-):
-    _rng = np.random.default_rng(0)
-    _coeffs = _rng.uniform(-3.0, 3.0, size=exactness_degree.value + 1)
-
-    def _poly(x):
-        return np.polyval(_coeffs, x)
-
-    _a, _b, _n = -1.0, 2.0, 8
-    _antideriv = np.polyint(_coeffs) # Antiderivative of the polynomial
-    _I_poly_exact = np.polyval(_antideriv, _b) - np.polyval(_antideriv, _a)
-
-    _I_rect = rectangle_rule(_poly, _a, _b, _n)
-    _I_trap = trapezoidal_rule(_poly, _a, _b, _n)
-    _I_simp = simpson_rule(_poly, _a, _b, _n)
-
-    # add a figure of the polynomial
-    _xplot = np.linspace(_a, _b, 400)
-    _fig, _ax = plt.subplots()
-    _ax.plot(_xplot, _poly(_xplot), color="crimson", lw=2, label="$f(x)$")
-    _ax.axhline(0.0, color="black", lw=0.8, ls="--")
-    _ax.set(xlabel="$x$", ylabel="$f(x)$")
-    _ax.legend()
-    mo.vstack(
-        [
-            md_exact_title,
-            md_exact_text,
-            exactness_degree,
-            mo.hstack(
-                [
-                    mo.stat(
-                        label="Rectangle error",
-                        value=f"{abs(_I_poly_exact - _I_rect):.2e}",
-                    ),
-                    mo.stat(
-                        label="Trapezoidal error",
-                        value=f"{abs(_I_poly_exact - _I_trap):.2e}",
-                    ),
-                    mo.stat(
-                        label="Simpson error",
-                        value=f"{abs(_I_poly_exact - _I_simp):.2e}",
-                    ),
-                ]
-            ),
-            _fig,
-        ]
-    )
-    return
-
-
-@app.cell
-def _(mo):
-    md_conv_title = mo.md(
-        """
-        ## 5. Convergence study
-        ---
-        """
-    )
-    md_conv_text = mo.md(
-        r"""
-        The error scaling predicted above, $\mathcal{O}(h^2)$ for rectangle
-        and trapezoidal, $\mathcal{O}(h^4)$ for Simpson, can be verified
-        empirically: plotting $\log(\text{error})$ against $\log(h)$ should
-        give straight lines whose slopes match those orders.
-        """
-    )
-    return md_conv_text, md_conv_title
-
-
-@app.cell
-def _(mo):
-    conv_nmax = mo.ui.slider(6, 60, value=30, step=2, label="Maximum $N$ (even)")
-    return (conv_nmax,)
+    return estimate_simpson, fig_simpson, md_simpson_text
 
 
 @app.cell
 def _(
     I_exact,
-    a_ref,
-    b_ref,
-    conv_nmax,
-    f,
-    md_conv_text,
-    md_conv_title,
+    a_val,
+    b_val,
+    c_val,
+    estimate_rectangle,
+    estimate_simpson,
+    estimate_trapezoidal,
+    fig_rectangle,
+    fig_simpson,
+    fig_trapezoidal,
+    formula_widget,
+    md_rectangle_text,
+    md_ref_text,
+    md_ref_title,
+    md_simpson_text,
+    md_trapezoidal_text,
     mo,
-    np,
-    plt,
-    rectangle_rule,
-    simpson_rule,
-    trapezoidal_rule,
+    rect_n,
+    simpson_n,
+    trap_n,
 ):
-    _N_values = np.arange(2, conv_nmax.value + 1, 2)
-    _h_values = (b_ref - a_ref) / _N_values
-    _err_rect = np.array(
-        [abs(I_exact - rectangle_rule(f, a_ref, b_ref, n)) for n in _N_values]
-    )
-    _err_trap = np.array(
-        [abs(I_exact - trapezoidal_rule(f, a_ref, b_ref, n)) for n in _N_values]
-    )
-    _err_simp = np.array(
-        [abs(I_exact - simpson_rule(f, a_ref, b_ref, n)) for n in _N_values]
-    )
-
-    _order_rect = np.polyfit(np.log(_h_values), np.log(_err_rect), 1)[0]
-    _order_trap = np.polyfit(np.log(_h_values), np.log(_err_trap), 1)[0]
-    _order_simp = np.polyfit(np.log(_h_values), np.log(_err_simp), 1)[0]
-
-    _fig, _ax = plt.subplots()
-    _ax.loglog(_h_values, _err_rect, "o-", label=f"Rectangle (order {_order_rect:.2f})")
-    _ax.loglog(_h_values, _err_trap, "s-", label=f"Trapezoidal (order {_order_trap:.2f})")
-    _ax.loglog(_h_values, _err_simp, "^-", label=f"Simpson (order {_order_simp:.2f})")
-    _ax.set(xlabel="$h$", ylabel="Absolute error")
-    _ax.legend()
-
     mo.vstack(
         [
-            md_conv_title,
-            md_conv_text,
-            conv_nmax,
-            _fig,
-        ]
-    )
-    return
+            md_ref_title,
+            md_ref_text,
 
-
-@app.cell
-def _(mo):
-    md_adapt_title = mo.md(
-        """
-        ## 6. Adaptive integration by step doubling
-        ---
-        """
-    )
-    md_adapt_text = mo.md(
-        r"""
-        In practice we rarely know $f''$, so we cannot predict the error
-        directly — but we can *estimate* it by comparing two successive
-        refinements. Doubling $N$ halves $h$; since the error scales as
-        $\varepsilon = c\,h^p$,
-        $$
-        \varepsilon_2 = I - I_2 = c\left(\frac{h_1}{2}\right)^p, \qquad
-        \varepsilon_1 = I - I_1 = c\,h_1^p = 2^p\,\varepsilon_2,
-        $$
-        so that
-        $$
-        \varepsilon_2 \approx \frac{I_2 - I_1}{2^p - 1}.
-        $$
-        For rectangle/trapezoidal ($p=2$) the divisor is $3$; for Simpson
-        ($p=4$) it is $15$. We keep doubling $N$ until this error estimate
-        drops below a target tolerance.
-        """
-    )
-    return md_adapt_text, md_adapt_title
-
-
-@app.cell
-def _(np):
-    def adaptive_integrate(rule, error_divisor, f, a, b, tol=1e-8, n_start=1, max_iter=24):
-        n = n_start
-        I_prev = rule(f, a, b, n)
-        history = [(n, I_prev, np.nan)]
-        for _ in range(max_iter):
-            n *= 2
-            I_new = rule(f, a, b, n)
-            err_est = (I_new - I_prev) / error_divisor
-            history.append((n, I_new, err_est))
-            if abs(err_est) < tol:
-                return I_new, history
-            I_prev = I_new
-        return I_new, history
-
-    return (adaptive_integrate,)
-
-
-@app.cell
-def _(mo):
-    adaptive_rule_choice = mo.ui.dropdown(
-        options={
-            "Rectangle (order 2)": "rectangle",
-            "Trapezoidal (order 2)": "trapezoidal",
-            "Simpson (order 4)": "simpson",
-        },
-        value="Rectangle (order 2)",
-        label="Rule:",
-    )
-    adaptive_tol_exp = mo.ui.slider(
-        -12, -2, value=-8, step=1, label="Target tolerance, $\\log_{10}(\\rm tol)$"
-    )
-    return adaptive_rule_choice, adaptive_tol_exp
-
-
-@app.cell
-def _(
-    I_exact,
-    a_ref,
-    adaptive_integrate,
-    adaptive_rule_choice,
-    adaptive_tol_exp,
-    b_ref,
-    f,
-    md_adapt_text,
-    md_adapt_title,
-    mo,
-    np,
-    pd,
-    plt,
-    rectangle_rule,
-    simpson_rule,
-    trapezoidal_rule,
-):
-    _rule_map = {
-        "rectangle": (rectangle_rule, 3, 1),
-        "trapezoidal": (trapezoidal_rule, 3, 1),
-        "simpson": (simpson_rule, 15, 2),
-    }
-    _rule_fn, _err_div, _n_start = _rule_map[adaptive_rule_choice.value]
-    _tol = 10.0 ** adaptive_tol_exp.value
-
-    _I_final, _history = adaptive_integrate(
-        _rule_fn, _err_div, f, a_ref, b_ref, tol=_tol, n_start=_n_start
-    )
-    _df = pd.DataFrame(_history, columns=["N", "Estimate", "Error estimate"])
-
-    _fig, _ax = plt.subplots()
-    _iterations = np.arange(1, len(_history))
-    _errs = np.abs([h[2] for h in _history[1:]])
-    _ax.semilogy(_iterations, _errs, "o-", color="steelblue")
-    _ax.axhline(_tol, color="black", ls="--", label="Target tolerance")
-    _ax.set(xlabel="Doubling iteration", ylabel="Error estimate")
-    _ax.legend()
-
-    mo.vstack(
-        [
-            md_adapt_title,
-            md_adapt_text,
-            mo.hstack([adaptive_rule_choice, adaptive_tol_exp]),
-            mo.ui.table(_df),
-            _fig,
             mo.hstack(
                 [
-                    mo.stat(label="Final $N$", value=str(_history[-1][0])),
-                    mo.stat(
-                        label="Absolute error",
-                        value=f"{abs(I_exact - _I_final):.3e}",
+                    formula_widget,
+                    mo.md(rf"""
+                    $$
+                    \huge
+                    = \left[\frac{{{a_val:g}}}{{5}}x^5 + \frac{{{b_val:g}}}{{2}}x^2 + {c_val:g}x\right]_0^2 = {I_exact:g}
+                    $$
+                    """)
+                ],
+                align="center",
+                justify="center",
+            ),
+
+            # Rectangle, Trapezoidal, Simpson side-by-side
+            mo.hstack(
+                [
+                    # Rectangle block
+                    mo.vstack(
+                        [
+                            md_rectangle_text,
+                            rect_n,
+                            fig_rectangle,
+                            mo.hstack(
+                                [
+                                    mo.stat(
+                                        label="Estimate",
+                                        value=f"{estimate_rectangle:.6f}"
+                                    ),
+                                    mo.stat(
+                                        label="Absolute error",
+                                        value=f"{abs(I_exact - estimate_rectangle):.3e}"
+                                    ),
+                                ],
+                                align="center",
+                            ),
+                        ],
+                        align="center",
                     ),
-                ]
+
+                    # Trapezoidal block
+                    mo.vstack(
+                        [
+                            md_trapezoidal_text,
+                            trap_n,
+                            fig_trapezoidal,
+                            mo.hstack(
+                                [
+                                    mo.stat(
+                                        label="Estimate",
+                                        value=f"{estimate_trapezoidal:.6f}"
+                                    ),
+                                    mo.stat(
+                                        label="Absolute error",
+                                        value=f"{abs(I_exact - estimate_trapezoidal):.3e}"
+                                    ),
+                                ],
+                                align="center",
+                            ),
+                        ],
+                        align="center",
+                    ),
+
+                    # Simpson block
+                    mo.vstack(
+                        [
+                            md_simpson_text,
+                            simpson_n,
+                            fig_simpson,
+                            mo.hstack(
+                                [
+                                    mo.stat(
+                                        label="Estimate",
+                                        value=f"{estimate_simpson:.6f}"
+                                    ),
+                                    mo.stat(
+                                        label="Absolute error",
+                                        value=f"{abs(I_exact - estimate_simpson):.3e}"
+                                    ),
+                                ],
+                                align="center",
+                            ),
+                        ],
+                        align="center",
+                    ),
+                ],
+                widths=[1, 1, 1],
+                align="start",
+                justify="center",
             ),
         ]
     )
@@ -832,15 +465,7 @@ def _(
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # Chapter 5.1 - Fundamental methods for evaluating integrals
-    """)
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ### Fundamental Methods for Evaluating Integrals
+    # Chapter 5.1 - Fundamental Methods for Evaluating Integrals
 
     In an integral the domain of a function is divided into small units. At a point, $x$, in each unit,
     the function, $f(x)$, is multiplied by the measurement of the unit. All the products are then summed.
@@ -854,14 +479,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # Chapter 5.1.1 - Trapezoidal Rule
-    """)
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
+    ## Trapezoidal Rule
     Calculating the integral of a function is equivalent to calculating the area underneath
     the function's curve within a domain.
 
@@ -879,9 +497,9 @@ def _(mo):
 
     $$\approx h \left[ \frac{1}{2} f(a) + \frac{1}{2} f(b) + \sum_{k=1}^{n-1} f(a+kh) \right]$$
 
-    $ n $ is number of slices
+    $n$ is number of slices
 
-    $ h $ is slice width
+    $h$ is slice width
     $$ h = (b-a)/n$$
     """)
     return
@@ -1008,14 +626,7 @@ def _(error, graph, mo, num_in, results, trap_title):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # Chapter 5.1.2 - Simpson’s rule
-    """)
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
+    ## Simspon's rule
     The **Trapezoidal Rule** estimates the area under a curve by approximating the curve with linear segments.
 
     The **Simpson's Rule** approximates the function with quadratic curves.
@@ -1334,13 +945,6 @@ def _(com_results, graph_simpson_com, graph_trapezodial_com, mo, num_txt_com):
 def _(mo):
     mo.md(r"""
     # Chapter 5.2 - Errors on integrals
-    """)
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
     In numerical calculations there is usually a rounding error. But as these integration rules are only approximations the main source of error is the **approximation error**.
     """)
     return
@@ -1349,14 +953,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ### Trapezodial Rule
-    """)
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
+    ## Trapezodial Rule
     Considering one slice between $x_{k-1}$ and $x_k$, a **Taylor Expansion** of the function can be made.
 
     $$f(x)=\sum_{n=0}^\infty \left[ \frac{f^n(x_{k-1})}{n!} (x-x_{k-1})^n \right]$$
@@ -1437,13 +1034,6 @@ def _(mo):
 def _(mo):
     mo.md(r"""
     #### Rounding Error
-    """)
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
     is the value of the integral multiplied by the machine precision, $\epsilon \approx 10^{-16}$
 
     Increasing the number of slices reduces the approximation error. However there is no point in increasing the number of slices so that the approximation error becomes smaller than the rounding error as then the roudning error will dominate.
@@ -1464,7 +1054,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ### Simpson's Rule
+ 
     """)
     return
 
@@ -1472,16 +1062,11 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ### Simpson's Rule
     approximation error:
 
     $$\delta = \frac{1}{180} h^4 \left[ f'''(a) - f'''(b)\right]$$
-    """)
-    return
 
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
     rounding error:
 
     $$\epsilon \int_{a}^{b} f(x) \, dx$$
@@ -2171,13 +1756,20 @@ def _():
 
 
 @app.cell
-def _(format_romberg_table, mo, romberg_table, trap_estimates):
+def _(
+    format_romberg_table,
+    function_choice,
+    mo,
+    romberg_table,
+    trap_estimates,
+):
     _R = romberg_table(list(trap_estimates))
     romberg_table_text = format_romberg_table(_R)
     romberg_best = _R[-1][-1]
 
     mo.vstack(
         [
+            function_choice,
             mo.md("Romberg triangle built from the trapezoidal rows above (best estimate is the bottom-right entry):"),
             mo.md(f"```\n{romberg_table_text}\n```"),
         ]
@@ -2556,13 +2148,6 @@ def _(mo, n_slider_nc, np, plt):
 def _(mo):
     mo.md(r"""
     # Chapter 5.6 - Gaussian Quadrature
-    """)
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
     ## Legendre Polynomials $P_N(x)$
 
     **Definition**: An $N$-th degree polynomial.
