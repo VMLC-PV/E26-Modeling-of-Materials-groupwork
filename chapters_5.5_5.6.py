@@ -378,7 +378,8 @@ def _():
     _a_example = 0.0
     _b_example = 2.0
     _x_example, _w_example = _gaussxw(_N_example, _a_example, _b_example)
-    _gaussian_result = sum(_w_example[_k] * _f_example(_x_example[_k]) for _k in range(_N_example))
+    _example_terms = _w_example * _f_example(_x_example)
+    _gaussian_result = _example_terms.sum()
     _exact_result = 4.4
     _absolute_error = abs(_gaussian_result - _exact_result)
 
@@ -404,15 +405,39 @@ def _():
     _example_ax.legend(frameon=False)
     _example_fig.tight_layout()
 
+    _example_rows = "\n".join(
+      f"| {_k + 1} | {_x_example[_k]:.6f} | {_w_example[_k]:.6f} | {_f_example(_x_example[_k]):.6f} | {_example_terms[_k]:.6f} |"
+      for _k in range(_N_example)
+    )
+
     _mo.vstack([
       _example_fig,
       _mo.md(
-        f"**Answer:** With $N={_N_example}$, the Gaussian sample points are "
-        f"${_np.round(_x_example, 6).tolist()}$ and the weights are "
-        f"${_np.round(_w_example, 6).tolist()}$."
-        f" The weighted sum gives **{_gaussian_result:.16f}**, compared with the exact "
-        f"value **{_exact_result:.1f}**. The absolute error is "
-        f"${_absolute_error:.2e}$, which is floating-point round-off."
+        f"""**Legendre polynomial and division**
+
+    For the interval $[0, 2]$, use $x=t+1$, so $dx=dt$ and $t\in[-1,1]$. The third Legendre polynomial is
+
+    $$P_3(t)=\\frac{{1}}{{2}}(5t^3-3t).$$
+
+    The transformed integrand and its polynomial division are
+
+    $$f(t+1)=t^4+4t^3+6t^2+2t
+    =\\left(\\frac{{2}}{{5}}t+\\frac{{8}}{{5}}\\right)P_3(t)
+    +\\left(\\frac{{33}}{{5}}t^2+\\frac{{34}}{{5}}t\\right).$$
+
+    Thus, the quotient is $q(t)=\\frac{{2}}{{5}}t+\\frac{{8}}{{5}}$ and the remainder is $r(t)=\\frac{{33}}{{5}}t^2+\\frac{{34}}{{5}}t$.
+
+    **Numerical Gaussian rule**
+
+    | $k$ | point $x_k$ | weight $w_k$ | $f(x_k)$ | $w_k f(x_k)$ |
+    |---:|---:|---:|---:|---:|
+    {_example_rows}
+
+    The weighted sum is $\\sum_k w_k f(x_k)={_gaussian_result:.16f}$, while integrating the remainder gives
+
+    $$\\int_{{-1}}^1 r(t)\\,dt=\\frac{{33}}{{5}}\\frac{{2}}{{3}}=\\frac{{22}}{{5}}=4.4.$$
+
+    The absolute error is ${_absolute_error:.2e}$, which is floating-point round-off."""
       ),
     ])
     return
