@@ -17,10 +17,10 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # The Relaxation Method for Laplace's Equation
+    # The relaxation method
     ### Chapter 9.1.2
 
-    Relaxation is a way to solve for a field numerically when its governing equation and boundary values are known. We begin with Laplace's equation, put it on a grid, and repeatedly update the unknown values until the grid has settled.
+    Turn a continuous boundary-value problem into a grid—and iterate to equilibrium.
     """)
     return
 
@@ -28,15 +28,21 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Electric potential inside a square box
+    ## Example 9.1: potential inside a square
 
-    Consider the electric potential $\phi(x,y)$ inside a square box. In a region with no charge, the potential satisfies Laplace's equation:
+    In a charge-free region, electric potential satisfies Laplace's equation:
 
     $$
-    \nabla^2\phi = \frac{\partial^2\phi}{\partial x^2} +\frac{\partial^2\phi}{\partial y^2}=0.
+    \nabla^2\phi =
+    \frac{\partial^2\phi}{\partial x^2}
+    + \frac{\partial^2\phi}{\partial y^2}=0.
     $$
 
-    In Example 9.1, the box is one meter wide and one meter tall. Its top edge is held at $1\ \mathrm{V}$, and its other three edges are grounded at $0\ \mathrm{V}$. The edge values are prescribed; the unknown is the potential at points inside the box.
+    **Square box:** $1\ \mathrm{m}\times1\ \mathrm{m}$
+
+    - Top edge: $1\ \mathrm{V}$
+    - Other edges: $0\ \mathrm{V}$
+    - **Find:** the potential inside the box
     """)
     return
 
@@ -44,21 +50,21 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Discretising Laplace's equation
+    ## From equation to grid
 
-    A computer works with a finite grid rather than a continuous field. Replace each second spatial derivative with a central finite difference, using grid spacing $a$. At an interior grid point $(i,j)$, the discrete Laplace equation is
+    Replace each second derivative with a central difference on a grid of spacing $a$:
 
     $$
     \frac{\phi_{i+1,j}-2\phi_{i,j}+\phi_{i-1,j}}{a^2}+\frac{\phi_{i,j+1}-2\phi_{i,j}+\phi_{i,j-1}}{a^2}=0.
     $$
 
-    Multiplying through by $a^2$ gives the grid relation
+    Multiplying by $a^2$ gives the discrete Laplace equation:
 
     $$
     \phi_{i+1,j}+\phi_{i-1,j}+\phi_{i,j+1}+\phi_{i,j-1}-4\phi_{i,j}=0.
     $$
 
-    The continuous differential equation has now become an algebraic relation among nearby grid values.
+    A differential equation becomes a local relation between neighboring grid values.
     """)
     return
 
@@ -66,13 +72,15 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    Rearranging the grid relation isolates the value at the centre:
+    ## The four-neighbor rule
+
+    Rearranging gives the value at the center:
 
     $$
     \boxed{\phi_{i,j}=\frac{1}{4}\left(\phi_{i+1,j}+\phi_{i-1,j}+\phi_{i,j+1}+\phi_{i,j-1}\right)}
     $$
 
-    Thus, at a solution, every interior point equals the average of its four nearest neighbours: left, right, above, and below. This local averaging rule is the key idea behind relaxation.
+    **At equilibrium, each interior value is the average of its four nearest neighbors.**
     """)
     return
 
@@ -80,11 +88,13 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Boundary conditions and an initial guess
+    ## Fix the boundary. Guess the interior.
 
-    The boundary values stay fixed for the entire calculation. In Example 9.1, the top boundary is $1\ \mathrm{V}$ and the other boundaries are $0\ \mathrm{V}$. The interior can start from a simple guess, such as $0\ \mathrm{V}$ everywhere.
+    - Keep the wall voltages fixed: top $1\ \mathrm{V}$; other edges $0\ \mathrm{V}$.
+    - Initialize the interior, for example, to $0\ \mathrm{V}$.
+    - Repeatedly apply the four-neighbor rule.
 
-    Repeatedly applying the four-neighbor rule lets the interior adjust to the fixed wall voltages. For the example's $a=1\ \mathrm{cm}$ spacing, the one-meter side has 100 grid squares, or 101 grid points.
+    **Grid resolution:** $a=1\ \mathrm{cm}$ gives 100 squares (101 points) per side.
     """)
     return
 
@@ -92,15 +102,16 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## The Jacobi iteration
+    ## Jacobi: update from the old grid
 
-    In the **Jacobi method**, each new value $\phi'_{i,j}$ is calculated from the four neighbours in the **previous** grid:
+    Every new value uses neighbors from the **previous grid**:
 
     $$
         \phi'_{i,j}=\frac{1}{4}\left(\phi_{i+1,j}+\phi_{i-1,j}+\phi_{i,j+1}+\phi_{i,j-1}\right).
     $$
 
-    Every interior point is updated from the same old grid, so updates happen simultaneously rather than using newly computed values partway through a sweep. After the sweep, the new grid becomes the old grid for the next iteration.
+    - Read the old grid; write to a separate new grid.
+    - Update all interior points, then swap grids.
     """)
     return
 
@@ -282,9 +293,10 @@ def _(
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    Jacobi relaxation is stable for Laplace's equation, but it converges slowly on large grids. A fine grid has many interior points to update, and the method may need a very large number of complete sweeps before the largest change falls below $\epsilon$.
+    # To be continued in 9.2
+    Jacobi is simple and reliable, but convergence can be slow on fine grids.
 
-    For example, a $100\times100$ lattice can take over a minute with a straightforward Jacobi implementation. The method is simple and reliable, but this slow convergence motivates faster relaxation schemes for larger problems.
+    Each sweep updates every interior point; many sweeps may be needed before the largest change falls below $\epsilon$.
     """)
     return
 
@@ -292,36 +304,20 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Overrelaxation: deliberately take a larger step
+    ## Overrelaxation: take a larger step
 
-    Jacobi relaxation moves each value toward its local four-neighbour
-    average. If these changes are consistently small, we can try to move
-    farther in the same direction. Let $\phi'$ be the ordinary relaxed
-    value and let
-
-    $$
-    \Delta\phi(x,y)=\phi'(x,y)-\phi(x,y).
-    $$
-
-    Overrelaxation multiplies that change by $1+\omega$:
+    Let $\phi'$ be the ordinary relaxed value. The update is
 
     $$
     \begin{aligned}
+    \Delta\phi(x,y) &= \phi'(x,y)-\phi(x,y), \\
     \phi_\omega(x,y)
       &= \phi(x,y)+(1+\omega)\Delta\phi(x,y) \\
       &= (1+\omega)\phi'(x,y)-\omega\phi(x,y).
     \end{aligned}
     $$
 
-    Here $\omega>0$ is the *extra* amount of the step; for example,
-    $\omega=0.9$ means taking $1.9$ times the ordinary step. The hope is to
-    cross the target value and approach equilibrium faster.
-
-    **Why not just overrelax Jacobi?** On this square lattice, applying the
-    larger step while every point still reads only the old grid amplifies
-    some alternating error patterns. The iteration can grow instead of
-    settling. The key to a stable, useful version is to combine the larger
-    step with immediate reuse of updated values.
+    Here $\omega>0$ controls the overshoot: $\omega=0.9$ takes $1.9$ times the ordinary step.
     """)
     return
 
@@ -329,28 +325,11 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ### Why Jacobi overrelaxation is unstable
+    ### Overrelaxed Jacobi with alternating errors
 
-    To isolate the failure mode, start with a checkerboard-shaped error
-    pattern and keep the boundary error fixed at zero. This is the
-    highest-frequency mode of the discrete Jacobi update. On an $n\times n$
-    interior grid, Jacobi multiplies this mode by
+    A checkerboard alternates between high and low values. Since each point is surrounded by the opposite values, the pattern flips each round.
 
-    $$
-    \lambda_J=-\cos\left(\frac{\pi}{n+1}\right),
-    $$
-
-    which is close to $-1$. Applying the same overrelaxation step as before
-    changes its amplification factor to
-
-    $$
-    \lambda_\omega=(1+\omega)\lambda_J-\omega.
-    $$
-
-    For $n=20$ and $\omega=0.5$, this factor is about $-1.98$: the error
-    changes sign and nearly doubles on every sweep. The plot compares the
-    maximum error for ordinary and overrelaxed Jacobi. This is a stability
-    test using an error mode, not a new potential-field solution.
+    With ordinary Jacobi, the error slowly fades. But an extra-large step can push the values too far: in this example, the error nearly doubles each round. Instead of settling down, the calculation moves further from a solution.
     """)
     return
 
@@ -489,19 +468,13 @@ def _(mo, np, plt):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Gauss–Seidel: use the newest values as you sweep
+    ## Gauss–Seidel: reuse the newest values
 
-    Jacobi computes a whole new grid from the previous one. Gauss–Seidel
-    instead sweeps through the interior in order and updates the same array
-    immediately. With rows visited from top to bottom and columns from left
-    to right, the point above and the point to the left have already been
-    updated in the current sweep; the point below and the point to the right
-    still hold their previous-sweep values.
+    Sweep through the grid and update the same array immediately.
 
-    The four-point average is unchanged, but each stencil uses the newest
-    values available at that moment. The fixed boundary values are never
-    overwritten. Since the update is in-place, Gauss–Seidel needs only one
-    potential array: there is no second grid to fill or swap.
+    - Above and left: already updated this sweep.
+    - Below and right: still from the previous sweep.
+    - Boundaries stay fixed; only one potential array is needed.
     """)
     return
 
@@ -712,11 +685,9 @@ def _(Rectangle, gauss_seidel_next_step, gauss_seidel_sweep_step, mo, plt):
 
     mo.vstack([
         mo.md("""
-        **Gauss–Seidel: update the same grid in place**
+        **Gauss–Seidel | In-place update**
 
-        Each point is replaced immediately by the average of its four
-        neighbors. Values already visited are used immediately;
-        values not yet visited retain their previous-sweep values.
+        Replace each point with its four-neighbor average. Use the newest values already visited; retain old values elsewhere.
         """),
         mo.hstack([gauss_seidel_sweep_step, gauss_seidel_next_step]),
         mo.mpl.interactive(_fig),
@@ -727,39 +698,20 @@ def _(Rectangle, gauss_seidel_next_step, gauss_seidel_sweep_step, mo, plt):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ### Successive overrelaxation (SOR)
-
-    Now apply the overrelaxation step to the Gauss–Seidel average
-    $\bar\phi_{\rm GS}$:
+    ### Successive Overrelaxation (SOR): speed up Gauss–Seidel
 
     $$
-    \begin{aligned}
-    \phi(x,y)
-      &\leftarrow \phi(x,y)+(1+\omega)
-      \bigl(\bar\phi_{\rm GS}(x,y)-\phi(x,y)\bigr) \\
-      &= \frac{1+\omega}{4}
-      \bigl[\phi(x+a,y)+\phi(x-a,y)+\phi(x,y+a)+\phi(x,y-a)\bigr]
-      -\omega\phi(x,y).
-    \end{aligned}
+    \phi \leftarrow \phi + (1+\omega)(\bar\phi_{\rm GS}-\phi)
     $$
 
-    In this convention $\omega=0$ is ordinary Gauss–Seidel; the stable
-    overrelaxation range is $0<\omega<1$.
-    """)
-    return
+    $\bar\phi_{\rm GS}$ is the neighbor average, using the newest values available.
 
+    - $\omega=0$: ordinary Gauss–Seidel
+    - $0<\omega<1$: step past the average to reduce error faster
 
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ### Comparing convergence on the same grid
-
-    The plot below runs Jacobi, Gauss–Seidel, and SOR from the same initial
-    field, keeping the boundary fixed. It tracks the **maximum discrete
-    Laplace residual** after each complete sweep, rather than the size of
-    each method's update, and stops all three at the same tolerance. SOR
-    uses the near-optimal parameter for this square grid; in the convention
-    above its extra overrelaxation is $\omega=\omega_{\rm SOR}-1$.
+    **Why it works:** Gauss–Seidel reuses each update immediately. This
+    damps the checkerboard error that can grow when Jacobi overrelaxes.
+    The step size matters: too much overshoot can still cause instability.
     """)
     return
 
@@ -768,7 +720,7 @@ def _(mo):
 def _(mo, np, plt):
     _comparison_points = 31
     _comparison_interior = _comparison_points - 2
-    _comparison_tolerance = 1e-6
+    _comparison_tolerance = 1e-15
     _comparison_max_sweeps = 10_000
     _comparison_omega_sor = (
         2.0 / (1.0 + np.sin(np.pi / (_comparison_interior + 1)))
