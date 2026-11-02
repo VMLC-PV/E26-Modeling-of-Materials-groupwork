@@ -1,9 +1,10 @@
 import marimo
 
-__generated_with = "0.25.1"
+__generated_with = "0.24.0"
 app = marimo.App(
     width="medium",
     app_title="Boundary-value problems: shooting, relaxation, and eigenvalues",
+    layout_file="layouts/Chapter_8.6.slides.json",
 )
 
 
@@ -477,11 +478,10 @@ def _(mo):
 
     - **Initial guess:** Estimate the full trajectory while keeping both endpoint heights fixed: $(x(a)=x_0=0$, $x(b)=x_{\text{target}}=0$.
     - **Update rule:** Approximate $x''(t_i)=-g$ using neighboring grid points:
-      $$
+    $$
       x_i=\frac{x_{i-1}+x_{i+1}+gh^2}{2}
-      $$
+    $$
     - **Convergence:** Repeat updates until the maximum change per sweep is below $10^{-10}\,\text{m}$.
-    - **Acceleration:** Use red-black ordering and successive over-relaxation (SOR), with $\omega$ close to 2.
     - **Initial velocity:** Estimate from the slope at the starting point once the trajectory converges.
 
     **Key difference:** Shooting adjusts the initial velocity; relaxation adjusts intermediate heights while fixing both endpoints. The exact trajectory (dashed curve) validates the numerical result.
@@ -579,8 +579,7 @@ def _(
                 align="center",
             ),
             mo.md(
-                f"The animation saves every 100th sweep "
-                f"({len(relaxation_history) - 1} saved steps). The estimated "
+                f"The estimated "
                 f"initial velocity is **{relaxation_initial_velocity:.8f} m/s**."
             ),
         ]
@@ -733,12 +732,7 @@ def _(np):
             )
         return spectrum
 
-    return (
-        integrate_well_energy,
-        well_potential,
-        solve_well_spectrum,
-        well_z,
-    )
+    return solve_well_spectrum, well_potential, well_z
 
 
 @app.cell(hide_code=True)
